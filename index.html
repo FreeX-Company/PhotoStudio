@@ -2,7 +2,7 @@
 <html lang="ru" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FreeX PhotoStudio</title>
     <!-- Favicon / Логотип вкладки -->
     <link rel="icon" type="image/png" href="logo.png">
@@ -27,6 +27,7 @@
         body {
             user-select: none;
             -webkit-user-select: none;
+            touch-action: manipulation;
         }
 
         .impact-font {
@@ -124,17 +125,67 @@
             background-color: #77C440;
             color: #000000 !important;
         }
+
+        /* Маркеры изменения размера окна холста */
+        .resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #77C440;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+            border-radius: 2px;
+            z-index: 40;
+        }
+        .resize-handle.nw { top: -6px; left: -6px; cursor: nwse-resize; }
+        .resize-handle.n  { top: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+        .resize-handle.ne { top: -6px; right: -6px; cursor: nesw-resize; }
+        .resize-handle.e  { top: calc(50% - 6px); right: -6px; cursor: ew-resize; }
+        .resize-handle.se { bottom: -6px; right: -6px; cursor: nwse-resize; }
+        .resize-handle.s  { bottom: -6px; left: calc(50% - 6px); cursor: ns-resize; }
+        .resize-handle.sw { bottom: -6px; left: -6px; cursor: nesw-resize; }
+        .resize-handle.w  { top: calc(50% - 6px); left: -6px; cursor: ew-resize; }
+
+        .canvas-wrapper {
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 8px 10px -6px rgba(0,0,0,0.5);
+            border: 1px dashed rgba(119, 196, 64, 0.6);
+        }
+
+        /* Разделители для изменения размеров панелей ПК */
+        .sidebar-resizer {
+            width: 4px;
+            cursor: col-resize;
+            background-color: transparent;
+            transition: background-color 0.2s ease;
+            z-index: 30;
+        }
+        .sidebar-resizer:hover, .sidebar-resizer.resizing {
+            background-color: #77C440;
+        }
+
+        /* Мобильные улучшения */
+        @media (max-width: 768px) {
+            .mobile-panel-overlay {
+                transition: transform 0.3s ease-in-out;
+            }
+            .mobile-panel-hidden {
+                transform: translateY(100%);
+            }
+            .pc-only-flex {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-black text-slate-800 dark:text-slate-200 h-screen w-screen flex flex-col overflow-hidden font-sans transition-colors duration-200">
 
     <!-- ВЕРХНЕЕ МЕНЮ -->
-    <header class="bg-white dark:bg-black border-b border-slate-200 dark:border-zinc-900 text-xs px-4 py-2 flex items-center justify-between select-none z-20 w-full transition-colors duration-200">
-        <div class="flex items-center space-x-6">
-            <!-- Блок логотипа с анимированными буквами FREEX и PHOTOSTUDIO -->
-            <div class="flex items-center space-x-2.5 cursor-pointer group" onclick="window.location.href='index.html'">
-                <img src="logo.png" alt="FreeX PhotoStudio Logo" class="h-8 w-auto object-contain hover-logo-img" onerror="this.src='https://placehold.co/100x40/77C440/000000?text=FreeX'">
-                <div class="flex items-center text-2xl tracking-wide impact-font">
+    <header class="bg-white dark:bg-black border-b border-slate-200 dark:border-zinc-900 text-xs px-2 md:px-4 py-2 flex items-center justify-between select-none z-20 w-full transition-colors duration-200 flex-wrap gap-2">
+        <div class="flex items-center space-x-3 md:space-x-6">
+            <!-- Блок логотипа -->
+            <div class="flex items-center space-x-2 cursor-pointer group" onclick="window.location.href='index.html'">
+                <img src="logo.png" alt="FreeX Logo" class="h-6 md:h-8 w-auto object-contain hover-logo-img" onerror="this.src='https://placehold.co/100x40/77C440/000000?text=FreeX'">
+                <div class="flex items-center text-lg md:text-2xl tracking-wide impact-font">
                     <div class="flex items-center">
                         <span class="hover-letter text-slate-900 dark:text-white">F</span>
                         <span class="hover-letter text-slate-900 dark:text-white">R</span>
@@ -142,7 +193,7 @@
                         <span class="hover-letter text-slate-900 dark:text-white">E</span>
                         <span class="hover-letter letter-highlight">X</span>
                     </div>
-                    <div class="flex items-center ml-2">
+                    <div class="hidden sm:flex items-center ml-2">
                         <span class="hover-letter photo-text">P</span>
                         <span class="hover-letter photo-text">H</span>
                         <span class="hover-letter photo-text">O</span>
@@ -158,11 +209,12 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-2 text-slate-700 dark:text-slate-300">
+            <!-- Главное меню (Файл, Правка, Фильтры) -->
+            <div class="flex items-center space-x-1 md:space-x-2 text-slate-700 dark:text-slate-300">
                 <!-- Файл -->
                 <div class="relative group">
-                    <button class="px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Файл</button>
-                    <div class="absolute left-0 top-full hidden group-hover:flex flex-col bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded py-1 w-52 z-50">
+                    <button class="px-2 md:px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Файл</button>
+                    <div class="absolute left-0 top-full hidden group-hover:flex flex-col bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded py-1 w-48 md:w-52 z-50">
                         <button onclick="showNewCanvasPanel()" class="px-3 py-1.5 text-left hover:bg-accent hover:text-black flex justify-between items-center">
                             <span>Создать новый</span>
                         </button>
@@ -179,7 +231,7 @@
 
                 <!-- Редактировать -->
                 <div class="relative group">
-                    <button class="px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Правка</button>
+                    <button class="px-2 md:px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Правка</button>
                     <div class="absolute left-0 top-full hidden group-hover:flex flex-col bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded py-1 w-48 z-50">
                         <button onclick="undo()" class="px-3 py-1.5 text-left hover:bg-accent hover:text-black">Отменить</button>
                         <button onclick="redo()" class="px-3 py-1.5 text-left hover:bg-accent hover:text-black">Повторить</button>
@@ -194,7 +246,7 @@
 
                 <!-- Фильтры -->
                 <div class="relative group">
-                    <button class="px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Фильтры</button>
+                    <button class="px-2 md:px-3 py-1 rounded hover:bg-slate-100 dark:hover:bg-zinc-900 font-medium">Фильтры</button>
                     <div class="absolute left-0 top-full hidden group-hover:flex flex-col bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl rounded py-1 w-48 z-50">
                         <button onclick="applyFilter('invert')" class="px-3 py-1.5 text-left hover:bg-accent hover:text-black">Инверсия</button>
                         <button onclick="applyFilter('grayscale')" class="px-3 py-1.5 text-left hover:bg-accent hover:text-black">Черно-белое</button>
@@ -208,57 +260,67 @@
         </div>
 
         <!-- Кнопки быстрых действий -->
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1 md:space-x-2">
             <button onclick="undo()" title="Отмена" class="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-900 rounded text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                 <i class="fa-solid fa-rotate-left"></i>
             </button>
             <button onclick="redo()" title="Повтор" class="p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-900 rounded text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white">
                 <i class="fa-solid fa-rotate-right"></i>
             </button>
-            <button onclick="openExportModal()" class="ml-2 bg-accent hover:bg-accent-hover text-black px-4 py-1.5 rounded font-extrabold text-xs flex items-center space-x-1.5 shadow-md shadow-[#77C440]/20">
+            
+            <!-- Кнопка мобильного вызова панели слоев -->
+            <button onclick="toggleMobileSidebar()" class="md:hidden p-1.5 hover:bg-slate-100 dark:hover:bg-zinc-900 rounded text-accent">
+                <i class="fa-solid fa-layer-group text-lg"></i>
+            </button>
+
+            <button onclick="openExportModal()" class="ml-1 md:ml-2 bg-accent hover:bg-accent-hover text-black px-3 md:px-4 py-1.5 rounded font-extrabold text-xs flex items-center space-x-1 shadow-md shadow-[#77C440]/20">
                 <i class="fa-solid fa-download"></i>
-                <span>Экспорт</span>
+                <span class="hidden sm:inline">Экспорт</span>
             </button>
         </div>
     </header>
 
     <!-- ПАНЕЛЬ СВОЙСТВ ИНСТРУМЕНТА -->
-    <div class="bg-white dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-900 px-4 py-2 text-xs flex items-center space-x-6 text-slate-700 dark:text-slate-300 z-10 w-full overflow-x-auto transition-colors duration-200">
+    <div class="bg-white dark:bg-zinc-950 border-b border-slate-200 dark:border-zinc-900 px-3 py-2 text-xs flex items-center space-x-4 md:space-x-6 text-slate-700 dark:text-slate-300 z-10 w-full overflow-x-auto whitespace-nowrap transition-colors duration-200">
         <!-- Кисть / Ластик настройки -->
         <div class="flex items-center space-x-2">
             <span class="text-slate-500 dark:text-zinc-400">Размер:</span>
-            <input type="range" id="brushSize" min="1" max="100" value="10" class="w-24 accent-accent">
+            <input type="range" id="brushSize" min="1" max="100" value="10" class="w-20 md:w-24 accent-accent">
             <span id="brushSizeVal" class="w-8 text-slate-500 dark:text-zinc-400">10px</span>
         </div>
 
         <div class="flex items-center space-x-2">
             <span class="text-slate-500 dark:text-zinc-400">Прозрачность:</span>
-            <input type="range" id="brushOpacity" min="1" max="100" value="100" class="w-24 accent-accent">
+            <input type="range" id="brushOpacity" min="1" max="100" value="100" class="w-20 md:w-24 accent-accent">
             <span id="brushOpacityVal" class="w-8 text-slate-500 dark:text-zinc-400">100%</span>
+        </div>
+
+        <!-- Размеры холста напрямую -->
+        <div class="hidden sm:flex items-center space-x-2 border-l border-slate-300 dark:border-zinc-800 pl-4">
+            <span class="text-slate-500 dark:text-zinc-400">Окно:</span>
+            <input type="number" id="quickWidth" onchange="resizeCanvasDirectly()" class="w-14 bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-1 py-0.5 text-center text-slate-900 dark:text-white">
+            <span>×</span>
+            <input type="number" id="quickHeight" onchange="resizeCanvasDirectly()" class="w-14 bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-1 py-0.5 text-center text-slate-900 dark:text-white">
         </div>
 
         <!-- Панель управления выделением -->
         <div id="selectionOptions" class="hidden items-center space-x-2 border-l border-slate-300 dark:border-zinc-800 pl-4">
             <button onclick="copySelection()" title="Копировать выделение" class="bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 px-2 py-1 rounded flex items-center space-x-1 border border-slate-300 dark:border-zinc-800">
                 <i class="fa-regular fa-copy"></i>
-                <span>Копировать</span>
+                <span class="hidden md:inline">Копировать</span>
             </button>
             <button onclick="pasteSelection()" id="pasteBtn" title="Вставить выделенное" class="bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 px-2 py-1 rounded flex items-center space-x-1 border border-slate-300 dark:border-zinc-800">
                 <i class="fa-regular fa-paste"></i>
-                <span>Вставить</span>
+                <span class="hidden md:inline">Вставить</span>
             </button>
-            <button onclick="startMoveSelection()" title="Переместить выделенную область" class="bg-slate-100 dark:bg-zinc-900 hover:bg-slate-200 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 px-2 py-1 rounded flex items-center space-x-1 border border-slate-300 dark:border-zinc-800">
-                <i class="fa-solid fa-up-down-left-right"></i>
-                <span>Переместить</span>
-            </button>
-            <button onclick="clearSelection()" title="Сбросить выделение" class="bg-slate-100 dark:bg-zinc-900 hover:bg-red-100 dark:hover:bg-red-950/50 text-slate-700 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-300 px-2 py-1 rounded border border-slate-300 dark:border-zinc-800">
+            <button onclick="clearSelection()" title="Сбросить выделение" class="bg-slate-100 dark:bg-zinc-900 hover:bg-red-100 dark:hover:bg-red-950/50 text-slate-700 dark:text-zinc-300 hover:text-red-600 px-2 py-1 rounded border border-slate-300 dark:border-zinc-800">
                 <span>Сбросить</span>
             </button>
         </div>
 
         <!-- Выбор фигурой -->
-        <div id="shapeOptions" class="hidden items-center space-x-4 border-l border-slate-300 dark:border-zinc-800 pl-4">
-            <div class="flex items-center space-x-2">
+        <div id="shapeOptions" class="hidden items-center space-x-3 border-l border-slate-300 dark:border-zinc-800 pl-4">
+            <div class="flex items-center space-x-1">
                 <span class="text-slate-500 dark:text-zinc-400">Фигура:</span>
                 <select id="shapeType" class="bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-2 py-1 text-slate-900 dark:text-white focus:outline-none">
                     <option value="rect">Прямоугольник</option>
@@ -268,7 +330,7 @@
                     <option value="star">Звезда</option>
                 </select>
             </div>
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-1">
                 <span class="text-slate-500 dark:text-zinc-400">Заливка:</span>
                 <input type="checkbox" id="fillShape" class="rounded accent-accent w-4 h-4">
             </div>
@@ -277,7 +339,7 @@
         <!-- Панель ввода текста -->
         <div id="textOptions" class="hidden items-center space-x-2 border-l border-slate-300 dark:border-zinc-800 pl-4">
             <span class="text-slate-500 dark:text-zinc-400">Текст:</span>
-            <input type="text" id="textInput" placeholder="Введите текст..." class="bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-2 py-1 text-slate-900 dark:text-white w-36 focus:outline-none">
+            <input type="text" id="textInput" placeholder="Введите текст..." class="bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-2 py-1 text-slate-900 dark:text-white w-28 md:w-36 focus:outline-none">
             <span class="text-slate-500 dark:text-zinc-400">Размер:</span>
             <input type="number" id="fontSize" value="24" class="w-12 bg-slate-100 dark:bg-zinc-900 border border-slate-300 dark:border-zinc-800 rounded px-1 py-1 text-slate-900 dark:text-white">
         </div>
@@ -298,73 +360,102 @@
         </div>
 
         <!-- Информация о холсте -->
-        <div class="ml-auto flex items-center space-x-4 text-slate-500 dark:text-zinc-400 text-xs">
-            <span id="canvasDim">1200 x 800 px</span>
+        <div class="ml-auto flex items-center space-x-3 md:space-x-4 text-slate-500 dark:text-zinc-400 text-xs">
+            <span id="canvasDim" class="hidden md:inline">1200 x 800 px</span>
             <div class="flex items-center space-x-1 border-l border-slate-300 dark:border-zinc-800 pl-3">
                 <button onclick="zoomOut()" title="Отдалить" class="hover:text-slate-900 dark:hover:text-white px-1"><i class="fa-solid fa-minus"></i></button>
                 <span id="zoomVal" class="w-10 text-center">100%</span>
                 <button onclick="zoomIn()" title="Приблизить" class="hover:text-slate-900 dark:hover:text-white px-1"><i class="fa-solid fa-plus"></i></button>
                 <button onclick="resetZoom()" title="Сбросить масштаб" class="hover:text-slate-900 dark:hover:text-white px-1 ml-1"><i class="fa-solid fa-expand"></i></button>
             </div>
-            <span id="cursorPos">X: 0, Y: 0</span>
+            <span id="cursorPos" class="hidden md:inline">X: 0, Y: 0</span>
         </div>
     </div>
 
     <!-- ОСНОВНАЯ РАБОЧАЯ ОБЛАСТЬ -->
-    <div class="flex-1 flex overflow-hidden relative w-full">
+    <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative w-full">
         
         <!-- ЛЕВАЯ ПАНЕЛЬ ИНСТРУМЕНТОВ -->
-        <aside class="w-14 bg-white dark:bg-black border-r border-slate-200 dark:border-zinc-900 flex flex-col items-center py-3 space-y-2 z-10 select-none transition-colors duration-200">
-            <button onclick="setTool('move')" id="tool-move" title="Перемещение слоя" class="btn-tool active w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+        <aside id="leftSidebar" class="w-full md:w-14 bg-white dark:bg-black border-b md:border-b-0 md:border-r border-slate-200 dark:border-zinc-900 flex md:flex-col items-center justify-start py-2 md:py-3 px-2 md:px-2 space-x-2 md:space-x-0 md:space-y-2 z-10 select-none transition-colors duration-200 overflow-x-auto md:overflow-x-visible shrink-0 relative">
+            <button onclick="setTool('move')" id="tool-move" title="Перемещение слоя" class="btn-tool active min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-arrows-up-down-left-right text-base"></i>
             </button>
-            <button onclick="setTool('select')" id="tool-select" title="Выделение" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('select')" id="tool-select" title="Выделение" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-regular fa-square text-base"></i>
             </button>
-            <button onclick="setTool('pencil')" id="tool-pencil" title="Карандаш (пиксельный)" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('pencil')" id="tool-pencil" title="Карандаш (пиксельный)" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-pencil text-base"></i>
             </button>
-            <button onclick="setTool('brush')" id="tool-brush" title="Кисть" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('brush')" id="tool-brush" title="Кисть" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-paint-brush text-base"></i>
             </button>
-            <button onclick="setTool('eraser')" id="tool-eraser" title="Ластик" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('eraser')" id="tool-eraser" title="Ластик" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-eraser text-base"></i>
             </button>
-            <button onclick="setTool('bucket')" id="tool-bucket" title="Заливка" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('bucket')" id="tool-bucket" title="Заливка" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-fill-drip text-base"></i>
             </button>
-            <button onclick="setTool('shapes')" id="tool-shapes" title="Фигуры" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('shapes')" id="tool-shapes" title="Фигуры" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-shapes fa-solid text-base"></i>
             </button>
-            <button onclick="setTool('text')" id="tool-text" title="Текст" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('text')" id="tool-text" title="Текст" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-font text-base"></i>
             </button>
-            <button onclick="setTool('picker')" id="tool-picker" title="Пипетка" class="btn-tool w-10 h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
+            <button onclick="setTool('picker')" id="tool-picker" title="Пипетка" class="btn-tool min-w-[36px] w-9 h-9 md:w-10 md:h-10 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-zinc-900 text-slate-600 dark:text-slate-300">
                 <i class="fa-solid fa-eye-dropper text-base"></i>
             </button>
 
-            <hr class="w-8 border-slate-200 dark:border-zinc-900 my-2">
+            <hr class="hidden md:block w-8 border-slate-200 dark:border-zinc-900 my-2">
 
-            <!-- ВЫБОР ДВУХ ЦВЕТОВ (Primary & Secondary) -->
-            <div class="relative w-10 h-10 flex items-center justify-center">
-                <input type="color" id="secondaryColor" value="#ffffff" class="absolute bottom-0 right-0 w-6 h-6 rounded border border-slate-300 dark:border-zinc-800 bg-transparent cursor-pointer z-0">
-                <input type="color" id="primaryColor" value="#000000" class="absolute top-0 left-0 w-6 h-6 rounded border border-slate-300 dark:border-zinc-800 bg-transparent cursor-pointer z-10">
-                <button onclick="swapColors()" title="Поменять цвета местами" class="absolute -top-1 -right-1 text-[10px] bg-slate-200 dark:bg-zinc-900 hover:bg-slate-300 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 rounded-full w-4 h-4 flex items-center justify-center z-20 border border-slate-400 dark:border-zinc-700">
+            <!-- ВЫБОР ДВУХ ЦВЕТОВ -->
+            <div class="relative min-w-[36px] w-9 h-9 md:w-10 md:h-10 flex items-center justify-center shrink-0 ml-auto md:ml-0">
+                <input type="color" id="secondaryColor" value="#ffffff" class="absolute bottom-0 right-0 w-5 h-5 md:w-6 md:h-6 rounded border border-slate-300 dark:border-zinc-800 bg-transparent cursor-pointer z-0">
+                <input type="color" id="primaryColor" value="#000000" class="absolute top-0 left-0 w-5 h-5 md:w-6 md:h-6 rounded border border-slate-300 dark:border-zinc-800 bg-transparent cursor-pointer z-10">
+                <button onclick="swapColors()" title="Поменять цвета местами" class="absolute -top-1 -right-1 text-[9px] bg-slate-200 dark:bg-zinc-900 hover:bg-slate-300 text-slate-700 dark:text-zinc-300 rounded-full w-4 h-4 flex items-center justify-center z-20 border border-slate-400 dark:border-zinc-700">
                     <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
             </div>
         </aside>
 
+        <!-- Разделитель левой панели для ПК -->
+        <div id="leftResizer" class="sidebar-resizer hidden md:block"></div>
+
         <!-- ЦЕНТРАЛЬНАЯ ЧАСТЬ - ХОЛСТ -->
-        <main class="flex-1 relative overflow-auto checkerboard flex p-12 w-full h-full" id="viewport">
-            <div id="canvasContainer" class="relative shadow-2xl m-auto" style="transform-origin: center center;">
-                <!-- Слои и интерактивный слой предпросмотра рендерятся через JS -->
+        <main class="flex-1 relative overflow-auto checkerboard flex p-6 md:p-12 w-full h-full" id="viewport">
+            
+            <!-- Интерактивная рамка холста с ручками изменения размера -->
+            <div id="canvasWrapper" class="canvas-wrapper relative m-auto transition-shadow duration-150">
+                <div id="canvasContainer" class="relative" style="transform-origin: center center;">
+                    <!-- Слои и интерактивный слой предпросмотра рендерятся через JS -->
+                </div>
+
+                <!-- Ручки изменения размеров холста -->
+                <div class="resize-handle nw" data-dir="nw"></div>
+                <div class="resize-handle n"  data-dir="n"></div>
+                <div class="resize-handle ne" data-dir="ne"></div>
+                <div class="resize-handle e"  data-dir="e"></div>
+                <div class="resize-handle se" data-dir="se"></div>
+                <div class="resize-handle s"  data-dir="s"></div>
+                <div class="resize-handle sw" data-dir="sw"></div>
+                <div class="resize-handle w"  data-dir="w"></div>
             </div>
+
         </main>
 
-        <!-- ПРАВАЯ ПАНЕЛЬ СЛОЕВ И НАСТРОЕК -->
-        <aside class="w-80 bg-white dark:bg-black border-l border-slate-200 dark:border-zinc-900 flex flex-col z-10 select-none transition-colors duration-200">
+        <!-- Разделитель правой панели для ПК -->
+        <div id="rightResizer" class="sidebar-resizer hidden md:block"></div>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ СЛОЕВ И НАСТРОЕК (растягиваемая на ПК) -->
+        <aside id="mobileSidebar" class="fixed md:relative bottom-0 left-0 right-0 md:right-auto w-full md:w-80 h-[60vh] md:h-auto bg-white dark:bg-black border-t md:border-t-0 md:border-l border-slate-200 dark:border-zinc-900 flex flex-col z-40 select-none transition-transform duration-300 md:translate-y-0 translate-y-full md:flex shrink-0">
             
+            <!-- ВЕРХНЯЯ ШАПКА ДЛЯ МОБИЛЬНЫХ СЛОЕВ -->
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-zinc-900 px-4 py-2 md:hidden">
+                <span class="font-bold text-xs">Слои и Параметры</span>
+                <button onclick="toggleMobileSidebar()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
             <!-- ВКЛАДКИ -->
             <div class="flex border-b border-slate-200 dark:border-zinc-900 text-xs font-medium text-slate-500 dark:text-zinc-400">
                 <button id="tabLayersBtn" onclick="switchTab('layers')" class="flex-1 py-3 bg-slate-50 dark:bg-zinc-950 text-accent border-b-2 border-accent font-semibold">Слои</button>
@@ -511,20 +602,22 @@
         let redoStack = [];
         const MAX_UNDO = 20;
 
+        // Изменение размера окон/холста с помощью краев (Resizing window handle logic)
+        let isResizingCanvas = false;
+        let resizeDir = null;
+        let initialCanvasW = 0, initialCanvasH = 0;
+        let resizeStartX = 0, resizeStartY = 0;
+
         let activeSelection = null;
         let selectionBuffer = null;
         let isSelecting = false;
-        let isMovingSelection = false;
-        let isResizingSelection = false;
-        let activeHandle = null;
-        let selectionMoveOffset = { x: 0, y: 0 };
-        let origSelectionRect = null;
 
         let previewCanvas = null;
         let previewCtx = null;
 
         const viewport = document.getElementById('viewport');
         const container = document.getElementById('canvasContainer');
+        const wrapper = document.getElementById('canvasWrapper');
         const brushSizeInput = document.getElementById('brushSize');
         const brushOpacityInput = document.getElementById('brushOpacity');
         const primaryColorInput = document.getElementById('primaryColor');
@@ -533,57 +626,46 @@
         window.onload = () => {
             initCanvas(1200, 800, 'white');
             setupEventListeners();
+            setupCanvasResizers();
+            setupSidebarResizers();
         };
 
         function setupEventListeners() {
-            container.addEventListener('mousedown', (e) => {
-                if (e.button === 1) {
-                    e.preventDefault();
-                    swapColors();
-                    return;
+            // Регистрация интерактивных событий мыши и тач-событий для холста
+            viewport.addEventListener('mousedown', (e) => {
+                if (e.target.closest('#canvasContainer')) {
+                    startDrawing(getEventPoint(e));
                 }
-                startDrawing(e);
             });
 
-            window.addEventListener('mousemove', draw);
-            window.addEventListener('mouseup', stopDrawing);
+            viewport.addEventListener('mousemove', (e) => {
+                const pt = getEventPoint(e);
+                draw(pt);
+            });
 
-            viewport.addEventListener('wheel', (e) => {
-                if (e.ctrlKey || e.metaKey) {
-                    e.preventDefault();
-                    if (e.deltaY < 0) zoomIn();
-                    else zoomOut();
+            window.addEventListener('mouseup', (e) => {
+                stopDrawing(e);
+            });
+
+            // Поддержка Touch для мобильных устройств
+            viewport.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1 && e.target.closest('#canvasContainer')) {
+                    startDrawing(getEventPoint(e));
                 }
             }, { passive: false });
 
-            window.addEventListener('keydown', (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
-                    return;
+            viewport.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && isDrawing) {
+                    draw(getEventPoint(e));
+                    e.preventDefault();
                 }
+            }, { passive: false });
 
-                if (e.key === 'Delete' || e.key === 'Backspace') {
-                    if (activeSelection) {
-                        e.preventDefault();
-                        clearSelectionContent();
-                    }
-                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'с')) {
-                    e.preventDefault();
-                    copySelection();
-                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'v' || e.key === 'м')) {
-                    e.preventDefault();
-                    pasteSelection();
-                } else if (e.key === 'x' || e.key === 'X' || e.key === 'ч' || e.key === 'Ч') {
-                    swapColors();
-                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'я')) {
-                    e.preventDefault();
-                    if (e.shiftKey) redo();
-                    else undo();
-                } else if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || e.key === 'н')) {
-                    e.preventDefault();
-                    redo();
-                }
+            window.addEventListener('touchend', (e) => {
+                stopDrawing(e);
             });
 
+            // Изменение параметров кисти из верхней панели
             brushSizeInput.addEventListener('input', (e) => {
                 document.getElementById('brushSizeVal').innerText = e.target.value + 'px';
             });
@@ -593,20 +675,177 @@
             });
         }
 
+        /* Растяжение панелей ПК (Sidebar Resizers) */
+        function setupSidebarResizers() {
+            const leftSidebar = document.getElementById('leftSidebar');
+            const leftResizer = document.getElementById('leftResizer');
+            const rightSidebar = document.getElementById('mobileSidebar');
+            const rightResizer = document.getElementById('rightResizer');
+
+            let isResizingLeft = false;
+            let isResizingRight = false;
+
+            if (leftResizer) {
+                leftResizer.addEventListener('mousedown', (e) => {
+                    isResizingLeft = true;
+                    leftResizer.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+                });
+            }
+
+            if (rightResizer) {
+                rightResizer.addEventListener('mousedown', (e) => {
+                    isResizingRight = true;
+                    rightResizer.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+                });
+            }
+
+            window.addEventListener('mousemove', (e) => {
+                if (isResizingLeft && window.innerWidth > 768) {
+                    const newWidth = Math.max(50, Math.min(300, e.clientX));
+                    leftSidebar.style.width = `${newWidth}px`;
+                }
+                if (isResizingRight && window.innerWidth > 768) {
+                    const newWidth = Math.max(180, Math.min(600, window.innerWidth - e.clientX));
+                    rightSidebar.style.width = `${newWidth}px`;
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizingLeft) {
+                    isResizingLeft = false;
+                    leftResizer.classList.remove('resizing');
+                }
+                if (isResizingRight) {
+                    isResizingRight = false;
+                    rightResizer.classList.remove('resizing');
+                }
+                document.body.style.cursor = 'default';
+            });
+        }
+
+        /* Настройка интерактивных маркеров растяжения окон */
+        function setupCanvasResizers() {
+            const handles = document.querySelectorAll('.resize-handle');
+
+            handles.forEach(handle => {
+                const onPointerDown = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    isResizingCanvas = true;
+                    resizeDir = handle.getAttribute('data-dir');
+                    initialCanvasW = canvasWidth;
+                    initialCanvasH = canvasHeight;
+                    const pt = getEventPoint(e);
+                    resizeStartX = pt.clientX;
+                    resizeStartY = pt.clientY;
+                };
+
+                handle.addEventListener('mousedown', onPointerDown);
+                handle.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 1) onPointerDown(e.touches[0]);
+                }, { passive: false });
+            });
+
+            const onPointerMove = (e) => {
+                if (!isResizingCanvas) return;
+                const pt = getEventPoint(e);
+                const dx = (pt.clientX - resizeStartX) / zoomLevel;
+                const dy = (pt.clientY - resizeStartY) / zoomLevel;
+
+                let newW = initialCanvasW;
+                let newH = initialCanvasH;
+
+                if (resizeDir.includes('e')) newW = Math.max(50, Math.round(initialCanvasW + dx));
+                if (resizeDir.includes('s')) newH = Math.max(50, Math.round(initialCanvasH + dy));
+                if (resizeDir.includes('w')) newW = Math.max(50, Math.round(initialCanvasW - dx));
+                if (resizeDir.includes('n')) newH = Math.max(50, Math.round(initialCanvasH - dy));
+
+                if (newW !== canvasWidth || newH !== canvasHeight) {
+                    resizeCanvasTo(newW, newH);
+                }
+            };
+
+            const onPointerUp = () => {
+                if (isResizingCanvas) {
+                    isResizingCanvas = false;
+                    saveState();
+                }
+            };
+
+            window.addEventListener('mousemove', onPointerMove);
+            window.addEventListener('mouseup', onPointerUp);
+            window.addEventListener('touchmove', (e) => {
+                if (isResizingCanvas && e.touches.length === 1) onPointerMove(e.touches[0]);
+            });
+            window.addEventListener('touchend', onPointerUp);
+        }
+
+        function resizeCanvasTo(newWidth, newHeight) {
+            const oldWidth = canvasWidth;
+            const oldHeight = canvasHeight;
+
+            canvasWidth = newWidth;
+            canvasHeight = newHeight;
+
+            layers.forEach(layer => {
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = oldWidth;
+                tempCanvas.height = oldHeight;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(layer.canvas, 0, 0);
+
+                layer.canvas.width = canvasWidth;
+                layer.canvas.height = canvasHeight;
+                layer.ctx.drawImage(tempCanvas, 0, 0);
+            });
+
+            if (previewCanvas) {
+                previewCanvas.width = canvasWidth;
+                previewCanvas.height = canvasHeight;
+            }
+
+            updateContainerSize();
+            updateDimensionInputs();
+        }
+
+        function resizeCanvasDirectly() {
+            const w = parseInt(document.getElementById('quickWidth').value);
+            const h = parseInt(document.getElementById('quickHeight').value);
+            if (w > 10 && h > 10) {
+                resizeCanvasTo(w, h);
+                saveState();
+            }
+        }
+
+        function updateDimensionInputs() {
+            document.getElementById('canvasDim').innerText = `${canvasWidth} x ${canvasHeight} px`;
+            document.getElementById('quickWidth').value = canvasWidth;
+            document.getElementById('quickHeight').value = canvasHeight;
+        }
+
+        function getEventPoint(e) {
+            return {
+                clientX: e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0),
+                clientY: e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0] ? e.touches[0].clientY : 0)
+            };
+        }
+
         function initCanvas(w, h, bgType = 'transparent') {
             canvasWidth = w;
             canvasHeight = h;
             
-            if (w <= 128 || h <= 128) {
+            if (window.innerWidth <= 768) {
+                zoomLevel = Math.min(0.8, (window.innerWidth - 40) / w);
+            } else if (w <= 128 || h <= 128) {
                 zoomLevel = Math.max(4, Math.min(16, Math.floor(600 / Math.max(w, h))));
-            } else if (w <= 300 || h <= 300) {
-                zoomLevel = 2.0;
             } else {
                 zoomLevel = 1.0;
             }
+            
             updateContainerSize();
-
-            document.getElementById('canvasDim').innerText = `${w} x ${h} px`;
+            updateDimensionInputs();
 
             container.innerHTML = '';
             layers = [];
@@ -630,8 +869,8 @@
         function updateContainerSize() {
             container.style.width = (canvasWidth * zoomLevel) + 'px';
             container.style.height = (canvasHeight * zoomLevel) + 'px';
-            container.style.minWidth = (canvasWidth * zoomLevel) + 'px';
-            container.style.minHeight = (canvasHeight * zoomLevel) + 'px';
+            wrapper.style.width = (canvasWidth * zoomLevel) + 'px';
+            wrapper.style.height = (canvasHeight * zoomLevel) + 'px';
             document.getElementById('zoomVal').innerText = Math.round(zoomLevel * 100) + '%';
         }
 
@@ -646,7 +885,7 @@
         }
 
         function resetZoom() {
-            zoomLevel = (canvasWidth <= 128 || canvasHeight <= 128) ? 8 : 1.0;
+            zoomLevel = 1.0;
             updateContainerSize();
         }
 
@@ -738,26 +977,6 @@
                 previewCtx.fillStyle = 'rgba(59, 130, 246, 0.12)';
                 previewCtx.fillRect(x, y, width, height);
 
-                const handleSize = Math.max(6, 10 / zoomLevel);
-                previewCtx.fillStyle = '#3b82f6';
-                previewCtx.strokeStyle = '#ffffff';
-                previewCtx.lineWidth = Math.max(1, 1 / zoomLevel);
-                previewCtx.setLineDash([]);
-
-                const handles = [
-                    { x: x, y: y },
-                    { x: x + width, y: y },
-                    { x: x + width, y: y + height },
-                    { x: x, y: y + height }
-                ];
-
-                handles.forEach(h => {
-                    previewCtx.beginPath();
-                    previewCtx.rect(h.x - handleSize / 2, h.y - handleSize / 2, handleSize, handleSize);
-                    previewCtx.fill();
-                    previewCtx.stroke();
-                });
-
                 previewCtx.restore();
             }
         }
@@ -805,39 +1024,10 @@
             saveState();
         }
 
-        function startMoveSelection() {
-            if (!activeSelection || activeLayerIndex < 0) return;
-            copySelection();
-            clearSelectionContent();
-            setTool('move');
-        }
-
-        function checkHandleClick(pos) {
-            if (!activeSelection) return null;
-            const { x, y, width, height } = activeSelection;
-            const handleSize = Math.max(8, 12 / zoomLevel);
-
-            const handles = {
-                'nw': { x: x, y: y },
-                'ne': { x: x + width, y: y },
-                'se': { x: x + width, y: y + height },
-                'sw': { x: x, y: y + height }
-            };
-
-            for (let handle in handles) {
-                const h = handles[handle];
-                if (Math.abs(pos.x - h.x) <= handleSize && Math.abs(pos.y - h.y) <= handleSize) {
-                    return handle;
-                }
-            }
-            return null;
-        }
-
-        function startDrawing(e) {
-            if (e.button !== 0) return;
+        function startDrawing(ePt) {
             if (activeLayerIndex < 0 || !layers[activeLayerIndex].visible) return;
             
-            const pos = getCanvasCoordinates(e);
+            const pos = getCanvasCoordinates(ePt);
             if (pos.x < 0 || pos.x > canvasWidth || pos.y < 0 || pos.y > canvasHeight) return;
 
             isDrawing = true;
@@ -847,29 +1037,6 @@
             const ctx = layers[activeLayerIndex].ctx;
 
             if (currentTool === 'select') {
-                const clickedHandle = checkHandleClick(pos);
-                if (clickedHandle) {
-                    isResizingSelection = true;
-                    activeHandle = clickedHandle;
-                    origSelectionRect = { ...activeSelection };
-                    return;
-                }
-
-                if (activeSelection) {
-                    const inside = pos.x >= activeSelection.x && pos.x <= activeSelection.x + activeSelection.width &&
-                                   pos.y >= activeSelection.y && pos.y <= activeSelection.y + activeSelection.height;
-                    if (inside) {
-                        isMovingSelection = true;
-                        selectionMoveOffset = {
-                            x: pos.x - activeSelection.x,
-                            y: pos.y - activeSelection.y
-                        };
-                        return;
-                    } else {
-                        clearSelection();
-                    }
-                }
-
                 isSelecting = true;
             } else if (currentTool === 'move') {
                 dragImageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight);
@@ -891,8 +1058,8 @@
             }
         }
 
-        function draw(e) {
-            const pos = getCanvasCoordinates(e);
+        function draw(ePt) {
+            const pos = getCanvasCoordinates(ePt);
             document.getElementById('cursorPos').innerText = `X: ${Math.round(pos.x)}, Y: ${Math.round(pos.y)}`;
 
             if (!isDrawing || activeLayerIndex < 0) return;
@@ -903,38 +1070,7 @@
             const color = primaryColorInput.value;
 
             if (currentTool === 'select') {
-                if (isResizingSelection && activeSelection && origSelectionRect) {
-                    let { x, y, width, height } = origSelectionRect;
-
-                    if (activeHandle === 'se') {
-                        width = Math.max(1, pos.x - x);
-                        height = Math.max(1, pos.y - y);
-                    } else if (activeHandle === 'sw') {
-                        const newWidth = Math.max(1, (x + width) - pos.x);
-                        x = (x + width) - newWidth;
-                        width = newWidth;
-                        height = Math.max(1, pos.y - y);
-                    } else if (activeHandle === 'ne') {
-                        width = Math.max(1, pos.x - x);
-                        const newHeight = Math.max(1, (y + height) - pos.y);
-                        y = (y + height) - newHeight;
-                        height = newHeight;
-                    } else if (activeHandle === 'nw') {
-                        const newWidth = Math.max(1, (x + width) - pos.x);
-                        x = (x + width) - newWidth;
-                        width = newWidth;
-                        const newHeight = Math.max(1, (y + height) - pos.y);
-                        y = (y + height) - newHeight;
-                        height = newHeight;
-                    }
-
-                    activeSelection = { x, y, width, height };
-                    renderSelection();
-                } else if (isMovingSelection && activeSelection) {
-                    activeSelection.x = pos.x - selectionMoveOffset.x;
-                    activeSelection.y = pos.y - selectionMoveOffset.y;
-                    renderSelection();
-                } else if (isSelecting) {
+                if (isSelecting) {
                     const w = pos.x - startX;
                     const h = pos.y - startY;
                     activeSelection = {
@@ -982,21 +1118,14 @@
 
             if (currentTool === 'select') {
                 isSelecting = false;
-                isMovingSelection = false;
-                isResizingSelection = false;
-                activeHandle = null;
-
-                if (activeSelection && (activeSelection.width < 2 || activeSelection.height < 2)) {
-                    clearSelection();
-                } else {
-                    renderSelection();
-                }
+                renderSelection();
             } else if (activeLayerIndex >= 0) {
                 const ctx = layers[activeLayerIndex].ctx;
                 ctx.globalCompositeOperation = 'source-over';
 
                 if (currentTool === 'shapes' && e) {
-                    const pos = getCanvasCoordinates(e);
+                    const ePt = getEventPoint(e);
+                    const pos = getCanvasCoordinates(ePt);
                     previewCtx.clearRect(0, 0, canvasWidth, canvasHeight);
                     renderSelection();
                     drawShapeOnContext(ctx, startX, startY, pos.x, pos.y);
@@ -1055,8 +1184,6 @@
             previewCanvas.width = canvasWidth;
             previewCanvas.height = canvasHeight;
             previewCanvas.className = 'absolute top-0 left-0 w-full h-full pointer-events-none z-30';
-            previewCanvas.style.width = '100%';
-            previewCanvas.style.height = '100%';
             previewCtx = previewCanvas.getContext('2d');
             container.appendChild(previewCanvas);
 
@@ -1154,10 +1281,10 @@
             secondaryColorInput.value = temp;
         }
 
-        function getCanvasCoordinates(e) {
+        function getCanvasCoordinates(ePt) {
             const rect = container.getBoundingClientRect();
-            const clientX = e.clientX - rect.left;
-            const clientY = e.clientY - rect.top;
+            const clientX = ePt.clientX - rect.left;
+            const clientY = ePt.clientY - rect.top;
 
             const x = clientX / zoomLevel;
             const y = clientY / zoomLevel;
@@ -1559,6 +1686,11 @@
             const bg = document.getElementById('newCanvasBg').value;
             initCanvas(w, h, bg);
             hideNewCanvasPanel();
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            sidebar.classList.toggle('translate-y-full');
         }
     </script>
 </body>
