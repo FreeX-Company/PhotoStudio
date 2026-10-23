@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreeX PhotoStudio</title>
+    <!-- Favicon / Иконка вкладки -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { accent: '#77C440', 'accent-hover': '#65a834' } } }
+        }
+    </script>
+    <style>
+        body { user-select: none; -webkit-user-select: none; }
+        .checkerboard {
+            background-color: #1e293b;
+            background-image: linear-gradient(45deg, #0f172a 25%, transparent 25%), linear-gradient(-45deg, #0f172a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #0f172a 75%), linear-gradient(-45deg, transparent 75%, #0f172a 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+        .btn-tool.active { background-color: #77C440; color: #fff; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 h-screen w-screen flex flex-col overflow-hidden text-xs">
+
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+    <header class="bg-slate-950 border-b border-slate-800 px-4 py-2 flex items-center justify-between z-20">
+        <div class="flex items-center space-x-6">
+            <div class="flex items-center space-x-2 font-bold text-base text-white">
+                <img src="logo.png" alt="FreeX PhotoStudio Logo" class="h-6 w-auto object-contain" onerror="this.src='https://placehold.co/100x40/77C440/ffffff?text=FreeX'">
+                <span class="tracking-wide">FreeX PhotoStudio</span>
+            </div>
+            <div class="flex items-center space-x-1">
+                <button onclick="initCanvas(800, 600)" class="px-2 py-1 rounded hover:bg-slate-800">Новый</button>
+                <label class="px-2 py-1 rounded hover:bg-slate-800 cursor-pointer">
+                    Открыть <input type="file" class="hidden" accept="image/*" onchange="loadImage(event)">
+                </label>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button onclick="undo()" class="p-1.5 hover:bg-slate-800 rounded text-slate-300" title="Отмена"><i class="fa-solid fa-rotate-left"></i></button>
+            <button onclick="redo()" class="p-1.5 hover:bg-slate-800 rounded text-slate-300" title="Повтор"><i class="fa-solid fa-rotate-right"></i></button>
+            <button onclick="downloadImage()" class="bg-accent hover:bg-accent-hover text-white px-3 py-1 rounded font-medium flex items-center space-x-1">
+                <i class="fa-solid fa-download"></i><span>Сохранить</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- СВОЙСТВА ИНСТРУМЕНТА -->
+    <div class="bg-slate-900 border-b border-slate-800 px-4 py-1.5 flex items-center space-x-4 z-10 overflow-x-auto">
+        <div class="flex items-center space-x-1">
+            <span class="text-slate-400">Размер:</span>
+            <input type="range" id="brushSize" min="1" max="100" value="10" class="w-20 accent-accent" oninput="document.getElementById('brushSizeVal').innerText=this.value+'px'">
+            <span id="brushSizeVal" class="w-6 text-slate-400">10px</span>
+        </div>
+        <div id="shapeOptions" class="hidden items-center space-x-2 border-l border-slate-700 pl-3">
+            <select id="shapeType" class="bg-slate-800 border border-slate-700 rounded px-1 py-0.5 text-white">
+                <option value="rect">Прямоугольник</option>
+                <option value="circle">Круг</option>
+                <option value="line">Линия</option>
+            </select>
+            <label class="flex items-center space-x-1 cursor-pointer">
+                <input type="checkbox" id="fillShape" class="accent-accent"><span>Заливка</span>
+            </label>
+        </div>
+        <div class="ml-auto text-slate-400 flex space-x-3">
+            <span id="canvasDim">800 x 600</span>
+            <span id="cursorPos">X: 0, Y: 0</span>
+        </div>
+    </div>
+
+    <!-- ОСНОВНАЯ ОБЛАСТЬ -->
+    <div class="flex-1 flex overflow-hidden relative">
+        <!-- ТУЛБАР -->
+        <aside class="w-12 bg-slate-950 border-r border-slate-800 flex flex-col items-center py-2 space-y-1.5 z-10">
+            <button onclick="setTool('brush')" id="tool-brush" title="Кисть" class="btn-tool active w-8 h-8 rounded flex items-center justify-center hover:bg-slate-800"><i class="fa-solid fa-paint-brush"></i></button>
+            <button onclick="setTool('eraser')" id="tool-eraser" title="Ластик" class="btn-tool w-8 h-8 rounded flex items-center justify-center hover:bg-slate-800"><i class="fa-solid fa-eraser"></i></button>
+            <button onclick="setTool('bucket')" id="tool-bucket" title="Заливка" class="btn-tool w-8 h-8 rounded flex items-center justify-center hover:bg-slate-800"><i class="fa-solid fa-fill-drip"></i></button>
+            <button onclick="setTool('shapes')" id="tool-shapes" title="Фигуры" class="btn-tool w-8 h-8 rounded flex items-center justify-center hover:bg-slate-800"><i class="fa-shapes fa-solid"></i></button>
+            <button onclick="setTool('picker')" id="tool-picker" title="Пипетка" class="btn-tool w-8 h-8 rounded flex items-center justify-center hover:bg-slate-800"><i class="fa-solid fa-eye-dropper"></i></button>
+            <hr class="w-6 border-slate-800 my-1">
+            <input type="color" id="primaryColor" value="#000000" class="w-6 h-6 rounded border-0 bg-transparent cursor-pointer">
+        </aside>
+
+        <!-- ХОЛСТ -->
+        <main class="flex-1 relative overflow-auto checkerboard flex items-center justify-center p-4" id="viewport">
+            <div id="canvasContainer" class="relative shadow-xl"></div>
+        </main>
+
+        <!-- СЛОИ -->
+        <aside class="w-48 bg-slate-950 border-l border-slate-800 flex flex-col z-10 p-3">
+            <div class="flex items-center justify-between mb-2">
+                <span class="font-semibold text-slate-300">Слои</span>
+                <button onclick="addNewLayer()" class="p-1 hover:bg-slate-800 rounded text-slate-300"><i class="fa-solid fa-plus"></i></button>
+            </div>
+            <div id="layersList" class="flex-1 overflow-y-auto space-y-1.5 pr-1"></div>
+            <div class="pt-2 border-t border-slate-800 flex justify-end">
+                <button onclick="deleteActiveLayer()" class="p-1 hover:bg-red-900/50 text-red-400 rounded" title="Удалить слой"><i class="fa-regular fa-trash-can"></i></button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- JS ЛОГИКА -->
+    <script>
+        let canvasWidth = 800, canvasHeight = 600, layers = [], activeLayerIndex = -1, currentTool = 'brush';
+        let isDrawing = false, startX = 0, startY = 0;
+        let undoStack = [], redoStack = [], previewCanvas = null, previewCtx = null;
+
+        const container = document.getElementById('canvasContainer');
+        const primaryColorInput = document.getElementById('primaryColor');
+
+        window.onload = () => { initCanvas(800, 600); setupEvents(); };
+
+        function setupEvents() {
+            container.addEventListener('mousedown', startDrawing);
+            window.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', stopDrawing);
+        }
+
+        function initCanvas(w, h) {
+            canvasWidth = w; canvasHeight = h;
+            container.style.width = w + 'px'; container.style.height = h + 'px';
+            document.getElementById('canvasDim').innerText = `${w} x ${h}`;
+            container.innerHTML = ''; layers = []; undoStack = []; redoStack = [];
+
+            // Создаем и добавляем холст предпросмотра
+            previewCanvas = document.createElement('canvas');
+            previewCanvas.width = w; previewCanvas.height = h;
+            previewCanvas.className = 'absolute top-0 left-0 pointer-events-none z-30';
+            previewCtx = previewCanvas.getContext('2d');
+            container.appendChild(previewCanvas);
+
+            // Создаем базовый слой
+            addNewLayer('Фон');
+            saveState();
+        }
+
+        function addNewLayer(name = null) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth; canvas.height = canvasHeight;
+            canvas.className = 'absolute top-0 left-0 pointer-events-none';
+            const ctx = canvas.getContext('2d');
+
+            const layer = { id: Date.now(), name: name || `Слой ${layers.length + 1}`, canvas, ctx, visible: true };
+            layers.push(layer);
+            
+            if (previewCanvas && previewCanvas.parentNode === container) {
+                container.insertBefore(canvas, previewCanvas);
+            } else {
+                container.appendChild(canvas);
+            }
+
+            setActiveLayer(layers.length - 1);
+        }
+
+        function setActiveLayer(idx) {
+            if (idx >= 0 && idx < layers.length) {
+                activeLayerIndex = idx;
+                renderLayersControl();
+            }
+        }
+
+        function renderLayersControl() {
+            const list = document.getElementById('layersList');
+            list.innerHTML = '';
+            for (let i = layers.length - 1; i >= 0; i--) {
+                const layer = layers[i];
+                const item = document.createElement('div');
+                item.className = `flex items-center justify-between p-1.5 rounded cursor-pointer border ${i === activeLayerIndex ? 'bg-accent/20 border-accent text-white' : 'bg-slate-900 border-slate-800 text-slate-400'}`;
+                item.onclick = () => setActiveLayer(i);
+                item.innerHTML = `<span class="truncate">${layer.name}</span>`;
+                list.appendChild(item);
+            }
+        }
+
+        function setTool(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tool-${tool}`)?.classList.add('active');
+            document.getElementById('shapeOptions').style.display = tool === 'shapes' ? 'flex' : 'none';
+        }
+
+        function getPos(e) {
+            const rect = container.getBoundingClientRect();
+            return { x: (e.clientX - rect.left) * (canvasWidth / rect.width), y: (e.clientY - rect.top) * (canvasHeight / rect.height) };
+        }
+
+        function startDrawing(e) {
+            if (e.button !== 0 || activeLayerIndex < 0) return;
+            const pos = getPos(e);
+            isDrawing = true; startX = pos.x; startY = pos.y;
+            const ctx = layers[activeLayerIndex].ctx;
+
+            if (currentTool === 'picker') pickColor(pos.x, pos.y);
+            else if (currentTool === 'bucket') floodFill(Math.floor(pos.x), Math.floor(pos.y), primaryColorInput.value);
+            else if (currentTool === 'brush' || currentTool === 'eraser') {
+                ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+            }
+        }
+
+        function draw(e) {
+            const pos = getPos(e);
+            document.getElementById('cursorPos').innerText = `X: ${Math.round(pos.x)}, Y: ${Math.round(pos.y)}`;
+            if (!isDrawing || activeLayerIndex < 0) return;
+
+            const ctx = layers[activeLayerIndex].ctx;
+            const size = document.getElementById('brushSize').value;
+
+            if (currentTool === 'brush' || currentTool === 'eraser') {
+                ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = size;
+                ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+                ctx.strokeStyle = primaryColorInput.value;
+                ctx.lineTo(pos.x, pos.y); ctx.stroke();
+            } else if (currentTool === 'shapes') {
+                previewCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                drawShape(previewCtx, startX, startY, pos.x, pos.y);
+            }
+        }
+
+        function stopDrawing(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            if (activeLayerIndex >= 0) {
+                const ctx = layers[activeLayerIndex].ctx;
+                ctx.globalCompositeOperation = 'source-over';
+                if (currentTool === 'shapes' && e) {
+                    const pos = getPos(e);
+                    previewCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+                    drawShape(ctx, startX, startY, pos.x, pos.y);
+                }
+            }
+            saveState();
+        }
+
+        function drawShape(targetCtx, x1, y1, x2, y2) {
+            const shape = document.getElementById('shapeType').value;
+            const fill = document.getElementById('fillShape').checked;
+            targetCtx.strokeStyle = primaryColorInput.value;
+            targetCtx.fillStyle = primaryColorInput.value;
+            targetCtx.lineWidth = document.getElementById('brushSize').value;
+            targetCtx.beginPath();
+
+            const w = x2 - x1, h = y2 - y1;
+            if (shape === 'rect') fill ? targetCtx.fillRect(x1, y1, w, h) : targetCtx.strokeRect(x1, y1, w, h);
+            else if (shape === 'circle') {
+                targetCtx.ellipse(x1 + w/2, y1 + h/2, Math.abs(w/2), Math.abs(h/2), 0, 0, Math.PI * 2);
+                fill ? targetCtx.fill() : targetCtx.stroke();
+            } else if (shape === 'line') {
+                targetCtx.moveTo(x1, y1); targetCtx.lineTo(x2, y2); targetCtx.stroke();
+            }
+        }
+
+        function floodFill(startX, startY, color) {
+            const ctx = layers[activeLayerIndex].ctx;
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+        }
+
+        function pickColor(x, y) {
+            const temp = document.createElement('canvas');
+            temp.width = canvasWidth; temp.height = canvasHeight;
+            const tCtx = temp.getContext('2d');
+            layers.forEach(l => l.visible && tCtx.drawImage(l.canvas, 0, 0));
+            const p = tCtx.getImageData(x, y, 1, 1).data;
+            primaryColorInput.value = "#" + ((1 << 24) + (p[0] << 16) + (p[1] << 8) + p[2]).toString(16).slice(1);
+        }
+
+        function loadImage(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = new Image();
+            img.onload = () => {
+                initCanvas(img.width, img.height);
+                layers[0].ctx.drawImage(img, 0, 0);
+                saveState();
+            };
+            img.src = URL.createObjectURL(file);
+        }
+
+        function deleteActiveLayer() {
+            if (layers.length <= 1) return;
+            container.removeChild(layers[activeLayerIndex].canvas);
+            layers.splice(activeLayerIndex, 1);
+            setActiveLayer(Math.max(0, activeLayerIndex - 1));
+            saveState();
+        }
+
+        function saveState() {
+            if (undoStack.length > 10) undoStack.shift();
+            undoStack.push(layers.map(l => ({ name: l.name, data: l.ctx.getImageData(0, 0, canvasWidth, canvasHeight) })));
+            redoStack = [];
+        }
+
+        function undo() {
+            if (undoStack.length <= 1) return;
+            redoStack.push(undoStack.pop());
+            restoreState(undoStack[undoStack.length - 1]);
+        }
+
+        function redo() {
+            if (!redoStack.length) return;
+            const state = redoStack.pop();
+            undoStack.push(state);
+            restoreState(state);
+        }
+
+        function restoreState(state) {
+            state.forEach((s, i) => {
+                if (layers[i]) layers[i].ctx.putImageData(s.data, 0, 0);
+            });
+        }
+
+        function downloadImage() {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = canvasWidth; exportCanvas.height = canvasHeight;
+            const ctx = exportCanvas.getContext('2d');
+            layers.forEach(l => ctx.drawImage(l.canvas, 0, 0));
+            const a = document.createElement('a');
+            a.download = 'art.png';
+            a.href = exportCanvas.toDataURL();
+            a.click();
+        }
+    </script>
+</body>
+</html>
