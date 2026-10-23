@@ -34,6 +34,10 @@
             font-style: italic;
         }
 
+        .photo-text {
+            color: #ffffff;
+        }
+
         .hover-logo-img {
             display: inline-block;
             transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.25s ease;
@@ -127,16 +131,30 @@
     <!-- ВЕРХНЕЕ МЕНЮ -->
     <header class="bg-white dark:bg-black border-b border-slate-200 dark:border-zinc-900 text-xs px-4 py-2 flex items-center justify-between select-none z-20 w-full transition-colors duration-200">
         <div class="flex items-center space-x-6">
-            <!-- Блок логотипа с перенесенными анимациями и шрифтом из index -->
+            <!-- Блок логотипа с анимированными буквами FREEX и PHOTOSTUDIO -->
             <div class="flex items-center space-x-2.5 cursor-pointer group" onclick="window.location.href='index.html'">
                 <img src="logo.png" alt="FreeX PhotoStudio Logo" class="h-8 w-auto object-contain hover-logo-img" onerror="this.src='https://placehold.co/100x40/77C440/000000?text=FreeX'">
                 <div class="flex items-center text-2xl tracking-wide impact-font">
-                    <span class="hover-letter text-slate-900 dark:text-white">F</span>
-                    <span class="hover-letter text-slate-900 dark:text-white">R</span>
-                    <span class="hover-letter text-slate-900 dark:text-white">E</span>
-                    <span class="hover-letter text-slate-900 dark:text-white">E</span>
-                    <span class="hover-letter letter-highlight">X</span>
-                    <span class="ml-1.5 text-xs not-italic font-sans font-semibold tracking-normal text-slate-400 dark:text-zinc-500 uppercase">PhotoStudio</span>
+                    <div class="flex items-center">
+                        <span class="hover-letter text-slate-900 dark:text-white">F</span>
+                        <span class="hover-letter text-slate-900 dark:text-white">R</span>
+                        <span class="hover-letter text-slate-900 dark:text-white">E</span>
+                        <span class="hover-letter text-slate-900 dark:text-white">E</span>
+                        <span class="hover-letter letter-highlight">X</span>
+                    </div>
+                    <div class="flex items-center ml-2">
+                        <span class="hover-letter photo-text">P</span>
+                        <span class="hover-letter photo-text">H</span>
+                        <span class="hover-letter photo-text">O</span>
+                        <span class="hover-letter photo-text">T</span>
+                        <span class="hover-letter photo-text">O</span>
+                        <span class="hover-letter letter-highlight">S</span>
+                        <span class="hover-letter letter-highlight">T</span>
+                        <span class="hover-letter letter-highlight">U</span>
+                        <span class="hover-letter letter-highlight">D</span>
+                        <span class="hover-letter letter-highlight">I</span>
+                        <span class="hover-letter letter-highlight">O</span>
+                    </div>
                 </div>
             </div>
             
